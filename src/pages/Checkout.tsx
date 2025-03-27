@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import OrderSummary, { ProductItem } from '@/components/OrderSummary';
 import BillingDetailsForm, { BillingFormData } from '@/components/BillingDetailsForm';
 import PaymentForm from '@/components/PaymentForm';
 import CheckoutSteps from '@/components/CheckoutSteps';
 import ConfirmationMessage from '@/components/ConfirmationMessage';
 import CheckoutHeader from '@/components/CheckoutHeader';
+import { useProduct } from '@/contexts/ProductContext';
 
 const DEFAULT_PRODUCT: ProductItem = {
   id: 'prod_01',
@@ -20,8 +22,23 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [billingDetails, setBillingDetails] = useState<BillingFormData | null>(null);
   const [orderNumber, setOrderNumber] = useState('');
+  const { selectedProduct } = useProduct();
+  const navigate = useNavigate();
   
   const steps = ['Billing', 'Payment', 'Confirmation'];
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
+  
+  // Create a product item from the selected product or use the default
+  const productToCheckout: ProductItem = selectedProduct ? {
+    id: String(selectedProduct.id),
+    name: selectedProduct.name,
+    description: selectedProduct.description,
+    price: selectedProduct.price,
+    licenseType: 'Standard'
+  } : DEFAULT_PRODUCT;
   
   const handleBillingComplete = (data: BillingFormData) => {
     setBillingDetails(data);
@@ -81,7 +98,7 @@ const Checkout = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
                 >
-                  <OrderSummary product={DEFAULT_PRODUCT} />
+                  <OrderSummary product={productToCheckout} />
                 </motion.div>
               </>
             ) : (

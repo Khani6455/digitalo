@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, ArrowRight, Package } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 
 const PRODUCTS = [
@@ -37,6 +37,12 @@ const PRODUCTS = [
 ];
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+  
+  const handleViewProduct = (id: number) => {
+    navigate(`/product/${id}`);
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <header className="container mx-auto px-4 py-6">
@@ -87,7 +93,11 @@ const LandingPage = () => {
         <h2 className="text-3xl font-bold mb-8 text-white text-center">Featured Products</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {PRODUCTS.map(product => (
-            <div key={product.id} className="bg-gray-800/80 rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 border border-gray-700 hover:border-purple-500/50 group">
+            <div 
+              key={product.id} 
+              className="bg-gray-800/80 rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 border border-gray-700 hover:border-purple-500/50 group cursor-pointer"
+              onClick={() => handleViewProduct(product.id)}
+            >
               <div className="h-48 overflow-hidden">
                 <img 
                   src={product.image} 
@@ -100,8 +110,15 @@ const LandingPage = () => {
                 <p className="text-gray-400 mb-4 text-sm">{product.description}</p>
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-purple-400">${product.price}</span>
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                    <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                  <Button 
+                    size="sm" 
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewProduct(product.id);
+                    }}
+                  >
+                    View Details
                   </Button>
                 </div>
               </div>
