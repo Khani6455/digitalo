@@ -12,6 +12,7 @@ import LandingPage from "./pages/LandingPage";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProductDetail from "./pages/ProductDetail";
+import Products from "./pages/Products";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/products" element={<Products />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/checkout" element={<Index />} />
               <Route path="/admin-login" element={<AdminLogin />} />

@@ -1,16 +1,15 @@
 
-import React, { useRef } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, ArrowRight, Package } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import { useProduct } from "@/contexts/ProductContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
 
-const LandingPage = () => {
+const Products = () => {
   const navigate = useNavigate();
   const { products, loading, setSelectedProduct } = useProduct();
-  const featuredProductsRef = useRef<HTMLElement>(null);
   
   const handleViewProduct = (id: string | number) => {
     const product = products.find(p => p.id === id);
@@ -18,12 +17,6 @@ const LandingPage = () => {
       setSelectedProduct(product);
     }
     navigate(`/product/${id}`);
-  };
-  
-  const scrollToProducts = () => {
-    if (featuredProductsRef.current) {
-      featuredProductsRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
   };
   
   return (
@@ -53,34 +46,22 @@ const LandingPage = () => {
         </div>
       </header>
 
-      <section className="container mx-auto px-4 py-12 md:py-24">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white animate-fade-in">
-            Premium Digital Products
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto animate-fade-in opacity-80">
-            Boost your productivity with our high-quality digital tools and resources
-          </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Button 
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-6"
-              onClick={scrollToProducts}
-            >
-              Browse Products <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button variant="outline" className="text-white border-white px-6 py-6">
-              Learn More
-            </Button>
-          </div>
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center mb-8 gap-4">
+          <Button 
+            variant="ghost" 
+            className="text-white" 
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="mr-2 h-5 w-5" /> Back to Home
+          </Button>
+          <h1 className="text-3xl font-bold text-white">All Products</h1>
         </div>
-      </section>
 
-      <section ref={featuredProductsRef} className="container mx-auto px-4 py-16 bg-black/30 backdrop-blur-sm rounded-3xl mb-16">
-        <h2 className="text-3xl font-bold mb-8 text-white text-center">Featured Products</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {loading ? (
             // Display skeletons while loading
-            Array.from({ length: 4 }).map((_, index) => (
+            Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className="bg-gray-800/80 rounded-xl overflow-hidden border border-gray-700 p-4">
                 <Skeleton className="h-48 w-full mb-4" />
                 <Skeleton className="h-6 w-3/4 mb-2" />
@@ -139,17 +120,9 @@ const LandingPage = () => {
             </div>
           )}
         </div>
-        <div className="text-center mt-12">
-          <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-            onClick={() => navigate('/products')}
-          >
-            View All Products
-          </Button>
-        </div>
-      </section>
+      </main>
 
-      <footer className="bg-gray-900 py-12 border-t border-gray-800">
+      <footer className="bg-gray-900 py-12 border-t border-gray-800 mt-16">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <Logo />
@@ -163,4 +136,4 @@ const LandingPage = () => {
   );
 };
 
-export default LandingPage;
+export default Products;
