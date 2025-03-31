@@ -1,3 +1,4 @@
+
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, ArrowRight, Package } from "lucide-react";
@@ -31,7 +32,11 @@ const LandingPage = () => {
         <div className="flex justify-between items-center">
           <Logo />
           <div className="flex gap-4">
-            <Button variant="ghost" className="text-white">
+            <Button 
+              variant="ghost" 
+              className="text-white"
+              onClick={() => navigate('/products')}
+            >
               Products
             </Button>
             <Button variant="ghost" className="text-white">
@@ -85,7 +90,7 @@ const LandingPage = () => {
               </div>
             ))
           ) : products.length > 0 ? (
-            products.map(product => (
+            products.slice(0, 4).map(product => (
               <div 
                 key={product.id} 
                 className="bg-gray-800/80 rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 border border-gray-700 hover:border-purple-500/50 group cursor-pointer"
@@ -105,7 +110,9 @@ const LandingPage = () => {
                   <h3 className="text-xl font-semibold mb-2 text-white">{product.name}</h3>
                   <p className="text-gray-400 mb-4 text-sm">{product.description}</p>
                   <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-purple-400">${product.price}</span>
+                    <span className="text-2xl font-bold text-purple-400">
+                      {product.price === 0 ? "Free" : `$${product.price}`}
+                    </span>
                     <Button 
                       size="sm" 
                       className="bg-purple-600 hover:bg-purple-700"

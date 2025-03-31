@@ -37,11 +37,6 @@ const Products = () => {
             <Button variant="ghost" className="text-white">
               Contact
             </Button>
-            <Link to="/admin-login">
-              <Button variant="outline" className="text-white border-white">
-                Admin Login
-              </Button>
-            </Link>
           </div>
         </div>
       </header>
@@ -93,7 +88,9 @@ const Products = () => {
                   <h3 className="text-xl font-semibold mb-2 text-white">{product.name}</h3>
                   <p className="text-gray-400 mb-4 text-sm">{product.description}</p>
                   <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-purple-400">${product.price}</span>
+                    <span className="text-2xl font-bold text-purple-400">
+                      {product.price === 0 ? "Free" : `$${product.price}`}
+                    </span>
                     <Button 
                       size="sm" 
                       className="bg-purple-600 hover:bg-purple-700"
@@ -111,12 +108,6 @@ const Products = () => {
           ) : (
             <div className="col-span-full text-center py-10">
               <p className="text-gray-400 text-lg">No products available yet.</p>
-              <Button 
-                className="mt-4 bg-purple-600 hover:bg-purple-700"
-                onClick={() => navigate('/admin-login')}
-              >
-                Login as Admin to add products
-              </Button>
             </div>
           )}
         </div>

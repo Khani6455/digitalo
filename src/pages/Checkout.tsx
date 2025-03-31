@@ -38,6 +38,30 @@ const Checkout = () => {
         description: "Please select a product before checkout",
       });
       navigate('/products');
+    } else if (selectedProduct.price === 0) {
+      // If product is free, skip to confirmation
+      toast.success("Free product detected", {
+        description: "Your download should start automatically",
+      });
+      
+      // Generate random order number for free product
+      setOrderNumber(`FREE-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`);
+      setCurrentStep(2); // Skip to confirmation
+      
+      // Simulate a download for the free product
+      setTimeout(() => {
+        const dummyContent = `Thank you for downloading ${selectedProduct.name}!\nThis is a free product demo file.`;
+        const blob = new Blob([dummyContent], {type: 'text/plain'});
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${selectedProduct.name.replace(/\s+/g, '-').toLowerCase()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 2000);
     }
   }, [selectedProduct, navigate]);
   
@@ -70,7 +94,11 @@ const Checkout = () => {
       case 1:
         return <PaymentForm onComplete={handlePaymentComplete} email={billingDetails?.email || ''} />;
       case 2:
-        return <ConfirmationMessage orderNumber={orderNumber} email={billingDetails?.email || ''} />;
+        return <ConfirmationMessage 
+                 orderNumber={orderNumber} 
+                 email={billingDetails?.email || ''} 
+                 isFreeProduct={selectedProduct?.price === 0}
+               />;
       default:
         return null;
     }
@@ -83,7 +111,9 @@ const Checkout = () => {
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="py-8">
           <h1 className="text-center text-2xl font-semibold md:text-3xl">
-            {currentStep === 2 ? 'Order Complete' : 'Checkout'}
+            {currentStep === 2 ? (
+              selectedProduct?.price === 0 ? 'Download Complete' : 'Order Complete'
+            ) : 'Checkout'}
           </h1>
           
           {currentStep < 2 && (

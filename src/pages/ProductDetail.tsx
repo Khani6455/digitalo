@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Check, ArrowLeft, Star } from "lucide-react";
+import { ShoppingCart, Check, ArrowLeft, Star, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useProduct } from "@/contexts/ProductContext";
 import Logo from "@/components/Logo";
@@ -13,6 +13,7 @@ const ProductDetail = () => {
   const { toast } = useToast();
   const { products, loading, setSelectedProduct, selectedProduct } = useProduct();
   const [added, setAdded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const handleAddToCart = () => {
     // In a real app, you would add the product to the cart
@@ -59,8 +60,56 @@ const ProductDetail = () => {
       
       // Save selected product and navigate to checkout
       setSelectedProduct(cartItem);
-      navigate("/checkout");
+      
+      // For free products, simulate direct download
+      if (product.price === 0) {
+        // Simulate download
+        simulateDownload(product.name);
+      } else {
+        navigate("/checkout");
+      }
     }
+  };
+  
+  const simulateDownload = (productName: string) => {
+    setDownloading(true);
+    
+    // Simulate download process
+    toast({
+      title: "Preparing Download",
+      description: `Please wait while we prepare your download...`,
+    });
+    
+    // Simulate delay
+    setTimeout(() => {
+      // Create a dummy download link
+      const dummyContent = `Thank you for downloading ${productName}!\nThis is a demo download file.`;
+      const blob = new Blob([dummyContent], {type: 'text/plain'});
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${productName.replace(/\s+/g, '-').toLowerCase()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      // Show success message
+      toast({
+        title: "Download Complete",
+        description: `${productName} has been downloaded successfully.`,
+      });
+      
+      // Reset downloading state
+      setDownloading(false);
+      
+      // Simulate email
+      toast({
+        title: "Email Sent",
+        description: "A download link has also been sent to your email address.",
+      });
+    }, 2000);
   };
 
   // Find the product based on the URL parameter
@@ -125,7 +174,11 @@ const ProductDetail = () => {
             </div>
             
             <div className="text-3xl font-bold text-purple-400 mb-6">
-              ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
+              {product.price === 0 ? (
+                <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm inline-flex items-center mr-2">Free</span>
+              ) : (
+                `$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}`
+              )}
             </div>
             
             <p className="text-gray-300 mb-6 text-lg">{product.description}</p>
@@ -145,32 +198,54 @@ const ProductDetail = () => {
             )}
             
             <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-              <Button
-                className="bg-purple-600 hover:bg-purple-700 h-14 text-lg gap-2"
-                onClick={handleBuyNow}
-              >
-                Buy Now
-              </Button>
-              
-              <Button
-                variant={added ? "outline" : "secondary"}
-                className={`h-14 text-lg gap-2 ${
-                  added ? "border-green-500 text-green-400" : "text-white"
-                }`}
-                onClick={handleAddToCart}
-              >
-                {added ? (
-                  <>
-                    <Check className="h-5 w-5" />
-                    Added to Cart
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="h-5 w-5" />
-                    Add to Cart
-                  </>
-                )}
-              </Button>
+              {product.price === 0 ? (
+                <Button
+                  className="bg-green-600 hover:bg-green-700 h-14 text-lg gap-2"
+                  onClick={handleBuyNow}
+                  disabled={downloading}
+                >
+                  {downloading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-5 w-5" />
+                      Download Now
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    className="bg-purple-600 hover:bg-purple-700 h-14 text-lg gap-2"
+                    onClick={handleBuyNow}
+                  >
+                    Buy Now
+                  </Button>
+                  
+                  <Button
+                    variant={added ? "outline" : "secondary"}
+                    className={`h-14 text-lg gap-2 ${
+                      added ? "border-green-500 text-green-400" : "text-white"
+                    }`}
+                    onClick={handleAddToCart}
+                  >
+                    {added ? (
+                      <>
+                        <Check className="h-5 w-5" />
+                        Added to Cart
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-5 w-5" />
+                        Add to Cart
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
