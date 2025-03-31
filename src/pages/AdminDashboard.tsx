@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Logo from "@/components/Logo";
-import { Package, UploadCloud, Edit, Trash2, LogOut, Plus, Settings, PieChart, ShoppingCart, Users, LoaderCircle, ArrowLeft } from "lucide-react";
+import { Package, UploadCloud, Edit, Trash2, LogOut, Plus, Settings, PieChart, ShoppingCart, Users, LoaderCircle, ArrowLeft, FileImage, FileAudio, FileVideo, FileArchive } from "lucide-react";
 import { useProduct } from "@/contexts/ProductContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,17 +32,19 @@ const AdminDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeSection, setActiveSection] = useState("products");
+  const [fileTypeIcon, setFileTypeIcon] = useState<React.ReactNode>(null);
 
   useEffect(() => {
     refreshProducts();
   }, [refreshProducts]);
 
   const handleLogout = () => {
+    localStorage.removeItem("isAdminLoggedIn");
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",
     });
-    navigate("/");
+    navigate("/admin-login");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -63,6 +66,7 @@ const AdminDashboard = () => {
     });
     setIsEditing(false);
     setSelectedFile(null);
+    setFileTypeIcon(null);
     setActiveTab("add");
   };
 
@@ -89,7 +93,21 @@ const AdminDashboard = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      
+      // Set the appropriate icon based on file type
+      if (file.type.startsWith('image/')) {
+        setFileTypeIcon(<FileImage className="h-5 w-5 text-blue-400" />);
+      } else if (file.type.startsWith('audio/')) {
+        setFileTypeIcon(<FileAudio className="h-5 w-5 text-green-400" />);
+      } else if (file.type.startsWith('video/')) {
+        setFileTypeIcon(<FileVideo className="h-5 w-5 text-purple-400" />);
+      } else if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
+        setFileTypeIcon(<FileArchive className="h-5 w-5 text-amber-400" />);
+      } else {
+        setFileTypeIcon(null);
+      }
     }
   };
 
@@ -112,11 +130,11 @@ const AdminDashboard = () => {
       const filePath = `${fileName}`;
       
       // Check if the file type is supported
-      const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'audio/mpeg', 'video/mp4', 'application/zip'];
+      const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'audio/mpeg', 'audio/mp3', 'video/mp4', 'application/zip', 'application/x-zip-compressed'];
       if (!supportedTypes.includes(selectedFile.type)) {
         toast({
           title: "Unsupported file type",
-          description: "Please upload an image (JPG, PNG, GIF), PDF, audio, video, or ZIP file",
+          description: "Please upload an image (JPG, PNG, GIF), audio (MP3), video (MP4), or ZIP file",
           variant: "destructive",
         });
         setUploading(false);
@@ -617,10 +635,10 @@ const AdminDashboard = () => {
                     <h3 className="text-lg font-medium mb-4">Account Settings</h3>
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="admin-username">Admin Username</Label>
+                        <Label htmlFor="admin-email">Admin Email</Label>
                         <Input 
-                          id="admin-username" 
-                          value="admin" 
+                          id="admin-email" 
+                          value="admin@digitalio.com" 
                           className="bg-gray-800/50 border-gray-700 mt-1"
                           readOnly
                         />
@@ -770,10 +788,11 @@ const AdminDashboard = () => {
                         className="bg-gray-800/50 border-gray-700"
                         required
                       />
+                      <p className="text-xs text-gray-400">Enter 0 for free products</p>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="image">Product Image</Label>
+                      <Label htmlFor="image">Product File/Image</Label>
                       <div className="flex flex-col gap-4">
                         <div className="flex gap-2">
                           <Input
@@ -787,12 +806,15 @@ const AdminDashboard = () => {
                         </div>
                         
                         <div className="flex flex-col gap-2">
-                          <Label htmlFor="file-upload">Or upload a new image:</Label>
+                          <Label htmlFor="file-upload" className="flex items-center gap-2">
+                            Upload digital product:
+                            {fileTypeIcon && <span className="ml-2">{fileTypeIcon}</span>}
+                          </Label>
                           <div className="flex items-center gap-2">
                             <Input
                               id="file-upload"
                               type="file"
-                              accept="image/*"
+                              accept=".jpg,.jpeg,.png,.gif,.mp3,.mp4,.zip"
                               onChange={handleFileChange}
                               className="bg-gray-800/50 border-gray-700"
                             />
@@ -810,6 +832,9 @@ const AdminDashboard = () => {
                               )}
                             </Button>
                           </div>
+                          <p className="text-xs text-gray-400">
+                            Supported formats: JPG, PNG, GIF, MP3, MP4, ZIP (Max size: 50MB)
+                          </p>
                         </div>
                         
                         {currentProduct.image && (
