@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Logo from "@/components/Logo";
-import { Package, UploadCloud, Edit, Trash2, LogOut, Plus, Settings, PieChart, ShoppingCart, Users, LoaderCircle } from "lucide-react";
+import { Package, UploadCloud, Edit, Trash2, LogOut, Plus, Settings, PieChart, ShoppingCart, Users, LoaderCircle, ArrowLeft } from "lucide-react";
 import { useProduct } from "@/contexts/ProductContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,7 +32,6 @@ const AdminDashboard = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeSection, setActiveSection] = useState("products");
 
-  // Remove authentication check
   useEffect(() => {
     refreshProducts();
   }, [refreshProducts]);
@@ -81,7 +79,7 @@ const AdminDashboard = () => {
     setActiveTab("add");
   };
 
-  const handleDeleteProduct = async (id: string) => { // Fix TypeScript error by ensuring id is always string
+  const handleDeleteProduct = async (id: string) => {
     try {
       await deleteProduct(id);
     } catch (error) {
@@ -113,6 +111,35 @@ const AdminDashboard = () => {
       const fileName = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
       
+      // Check if the file type is supported
+      const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'audio/mpeg', 'video/mp4', 'application/zip'];
+      if (!supportedTypes.includes(selectedFile.type)) {
+        toast({
+          title: "Unsupported file type",
+          description: "Please upload an image (JPG, PNG, GIF), PDF, audio, video, or ZIP file",
+          variant: "destructive",
+        });
+        setUploading(false);
+        return null;
+      }
+      
+      // Create storage bucket if it doesn't exist
+      const { data: bucketExists } = await supabase.storage
+        .getBucket('product-images');
+        
+      if (!bucketExists) {
+        const { error: bucketError } = await supabase.storage
+          .createBucket('product-images', {
+            public: true,
+            fileSizeLimit: 52428800 // 50MB
+          });
+          
+        if (bucketError) {
+          console.error("Error creating storage bucket:", bucketError);
+          throw bucketError;
+        }
+      }
+      
       // Upload the file to Supabase storage
       const { data, error } = await supabase.storage
         .from('product-images')
@@ -130,7 +157,7 @@ const AdminDashboard = () => {
       
       toast({
         title: "Success",
-        description: "Image uploaded successfully",
+        description: "File uploaded successfully",
       });
       
       setCurrentProduct(prev => ({
@@ -143,7 +170,7 @@ const AdminDashboard = () => {
       console.error("Error uploading image:", error);
       toast({
         title: "Error",
-        description: "Error uploading image",
+        description: "Error uploading file",
         variant: "destructive",
       });
       return null;
@@ -198,6 +225,10 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error saving product:", error);
     }
+  };
+
+  const goBack = () => {
+    navigate(-1);
   };
 
   const renderContent = () => {
@@ -276,7 +307,10 @@ const AdminDashboard = () => {
             <TabsContent value="products" className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Product List</h2>
-                <Button onClick={resetForm} className="bg-purple-600 hover:bg-purple-700">
+                <Button onClick={() => {
+                  resetForm();
+                  setActiveTab("add");
+                }} className="bg-purple-600 hover:bg-purple-700">
                   <Plus className="mr-2 h-5 w-5" /> Add New Product
                 </Button>
               </div>
@@ -325,7 +359,7 @@ const AdminDashboard = () => {
                                   variant="outline" 
                                   size="sm" 
                                   className="text-red-400 hover:text-red-300 hover:bg-red-950 border-red-900" 
-                                  onClick={() => handleDeleteProduct(product.id)}
+                                  onClick={() => handleDeleteProduct(String(product.id))}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -530,7 +564,16 @@ const AdminDashboard = () => {
         <div className="flex-1 overflow-auto">
           <header className="bg-black/30 backdrop-blur-md p-4 border-b border-gray-700 sticky top-0 z-10">
             <div className="flex justify-between items-center">
-              <h1 className="text-xl font-bold">Admin Dashboard</h1>
+              <div className="flex items-center">
+                <Button 
+                  variant="ghost" 
+                  onClick={goBack}
+                  className="mr-2 text-white hover:bg-gray-800"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <h1 className="text-xl font-bold">Admin Dashboard</h1>
+              </div>
               <Button variant="outline" onClick={() => navigate("/")} className="text-sm">
                 View Site
               </Button>

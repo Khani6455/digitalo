@@ -1,7 +1,7 @@
 
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, ArrowRight, Package } from "lucide-react";
+import { ShoppingCart, ArrowRight, Package, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import { useProduct } from "@/contexts/ProductContext";
@@ -39,14 +39,33 @@ const LandingPage = () => {
             >
               Products
             </Button>
-            <Button variant="ghost" className="text-white">
+            <Button 
+              variant="ghost" 
+              className="text-white"
+              onClick={() => window.alert("Pricing page coming soon!")}
+            >
               Pricing
             </Button>
-            <Button variant="ghost" className="text-white">
+            <Button 
+              variant="ghost" 
+              className="text-white"
+              onClick={() => window.alert("About page coming soon!")}
+            >
               About
             </Button>
-            <Button variant="ghost" className="text-white">
+            <Button 
+              variant="ghost" 
+              className="text-white"
+              onClick={() => window.alert("Contact page coming soon!")}
+            >
               Contact
+            </Button>
+            <Button 
+              variant="outline" 
+              className="text-white ml-2"
+              onClick={() => navigate('/admin-dashboard')}
+            >
+              Admin
             </Button>
           </div>
         </div>

@@ -30,7 +30,6 @@ const App = () => (
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/checkout" element={<Index />} />
               <Route path="/admin-dashboard" element={<AdminDashboard />} /> {/* Keep admin dashboard accessible via direct URL */}
-              {/* AdminLogin route removed */}
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
