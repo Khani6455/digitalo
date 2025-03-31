@@ -9,6 +9,7 @@ import CheckoutSteps from '@/components/CheckoutSteps';
 import ConfirmationMessage from '@/components/ConfirmationMessage';
 import CheckoutHeader from '@/components/CheckoutHeader';
 import { useProduct } from '@/contexts/ProductContext';
+import { toast } from "sonner";
 
 const DEFAULT_PRODUCT: ProductItem = {
   id: 'prod_01',
@@ -30,6 +31,15 @@ const Checkout = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStep]);
+
+  useEffect(() => {
+    if (!selectedProduct) {
+      toast.error("No product selected", {
+        description: "Please select a product before checkout",
+      });
+      navigate('/products');
+    }
+  }, [selectedProduct, navigate]);
   
   // Create a product item from the selected product or use the default
   const productToCheckout: ProductItem = selectedProduct ? {
@@ -58,7 +68,7 @@ const Checkout = () => {
       case 0:
         return <BillingDetailsForm onComplete={handleBillingComplete} />;
       case 1:
-        return <PaymentForm onComplete={handlePaymentComplete} />;
+        return <PaymentForm onComplete={handlePaymentComplete} email={billingDetails?.email || ''} />;
       case 2:
         return <ConfirmationMessage orderNumber={orderNumber} email={billingDetails?.email || ''} />;
       default:

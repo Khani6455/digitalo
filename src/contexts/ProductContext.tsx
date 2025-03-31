@@ -3,13 +3,16 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
+// Define the product type to match the database schema
 export interface Product {
-  id: string | number;
+  id: string;
   name: string;
   description: string;
   price: number;
   image: string;
-  features?: string[];
+  features: string[] | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ProductContextType {
@@ -20,8 +23,8 @@ interface ProductContextType {
   error: string | null;
   refreshProducts: () => Promise<void>;
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
-  updateProduct: (id: string | number, updates: Partial<Product>) => Promise<void>;
-  deleteProduct: (id: string | number) => Promise<void>;
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -50,7 +53,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      setProducts(data || []);
+      // Convert the features from JSON to string array if needed
+      const formattedProducts = data?.map(product => ({
+        ...product,
+        features: product.features ? 
+          (Array.isArray(product.features) ? product.features : Object.values(product.features)) : 
+          []
+      })) as Product[];
+      
+      setProducts(formattedProducts || []);
     } catch (err) {
       console.error('Error fetching products:', err);
       setError('Failed to load products');
@@ -81,7 +92,6 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       });
       
       await refreshProducts();
-      return data;
     } catch (err) {
       console.error('Error adding product:', err);
       toast({
@@ -95,7 +105,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateProduct = async (id: string | number, updates: Partial<Product>) => {
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
     try {
       setLoading(true);
       
@@ -125,7 +135,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const deleteProduct = async (id: string | number) => {
+  const deleteProduct = async (id: string) => {
     try {
       setLoading(true);
       

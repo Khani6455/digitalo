@@ -7,8 +7,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { CreditCard, ArrowRight, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useProduct } from '@/contexts/ProductContext';
 
-const PaymentForm = ({ onComplete }: { onComplete: () => void }) => {
+interface PaymentFormProps {
+  onComplete: () => void;
+  email: string;
+}
+
+const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
@@ -16,6 +23,7 @@ const PaymentForm = ({ onComplete }: { onComplete: () => void }) => {
   const [cvc, setCvc] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { selectedProduct } = useProduct();
 
   const formatCardNumber = (value: string) => {
     const digits = value.replace(/\D/g, '');
@@ -78,23 +86,49 @@ const PaymentForm = ({ onComplete }: { onComplete: () => void }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!validateForm() || !selectedProduct) {
       return;
     }
     
     setIsSubmitting(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast.success("Payment successful", {
-        description: "Your order has been processed successfully."
+    try {
+      // Process payment through Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('process-payment', {
+        body: {
+          paymentMethod,
+          email,
+          cardDetails: paymentMethod === 'card' ? {
+            cardNumber: cardNumber.replace(/\s/g, ''),
+            cardName,
+            expiry,
+            cvc
+          } : null,
+          productId: selectedProduct.id
+        }
       });
-      onComplete();
-    }, 1500);
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        toast.success("Payment successful", {
+          description: "Your order has been processed successfully."
+        });
+        onComplete();
+      } else {
+        throw new Error(data.error || "Payment processing failed");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("Payment failed", {
+        description: error.message || "There was an issue processing your payment. Please try again."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
