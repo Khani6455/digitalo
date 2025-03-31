@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, ArrowRight, Package } from "lucide-react";
@@ -44,11 +43,6 @@ const LandingPage = () => {
             <Button variant="ghost" className="text-white">
               Contact
             </Button>
-            <Link to="/admin-login">
-              <Button variant="outline" className="text-white border-white">
-                Admin Login
-              </Button>
-            </Link>
           </div>
         </div>
       </header>
@@ -79,7 +73,6 @@ const LandingPage = () => {
         <h2 className="text-3xl font-bold mb-8 text-white text-center">Featured Products</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {loading ? (
-            // Display skeletons while loading
             Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="bg-gray-800/80 rounded-xl overflow-hidden border border-gray-700 p-4">
                 <Skeleton className="h-48 w-full mb-4" />
@@ -130,12 +123,7 @@ const LandingPage = () => {
           ) : (
             <div className="col-span-full text-center py-10">
               <p className="text-gray-400 text-lg">No products available yet.</p>
-              <Button 
-                className="mt-4 bg-purple-600 hover:bg-purple-700"
-                onClick={() => navigate('/admin-login')}
-              >
-                Login as Admin to add products
-              </Button>
+              <p className="mt-4 text-gray-400">Check back soon for new products!</p>
             </div>
           )}
         </div>

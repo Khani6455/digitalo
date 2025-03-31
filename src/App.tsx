@@ -9,7 +9,6 @@ import { ProductProvider } from "./contexts/ProductContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
-import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProductDetail from "./pages/ProductDetail";
 import Products from "./pages/Products";
@@ -30,8 +29,8 @@ const App = () => (
               <Route path="/products" element={<Products />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/checkout" element={<Index />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} /> {/* Keep admin dashboard accessible via direct URL */}
+              {/* AdminLogin route removed */}
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
