@@ -4,14 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Logo from "@/components/Logo";
-import { Package, UploadCloud, Edit, Trash2, LogOut, Plus, Settings, PieChart, ShoppingCart, Users, LoaderCircle, ArrowLeft, FileImage, FileAudio, FileVideo, FileArchive } from "lucide-react";
+import { Package, LogOut, Settings, PieChart, ShoppingCart, Users, ArrowLeft, LoaderCircle } from "lucide-react";
 import { useProduct } from "@/contexts/ProductContext";
-import { supabase } from "@/integrations/supabase/client";
+import AdminProductList from "@/components/admin/AdminProductList";
+import AdminProductForm from "@/components/admin/AdminProductForm";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -29,12 +28,10 @@ const AdminDashboard = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("products");
-  const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeSection, setActiveSection] = useState("products");
-  const [fileTypeIcon, setFileTypeIcon] = useState<React.ReactNode>(null);
 
   useEffect(() => {
+    // Refresh products when dashboard mounts
     refreshProducts();
   }, [refreshProducts]);
 
@@ -47,14 +44,6 @@ const AdminDashboard = () => {
     navigate("/admin-login");
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCurrentProduct(prev => ({
-      ...prev,
-      [name]: name === "price" ? parseFloat(value) || 0 : value
-    }));
-  };
-
   const resetForm = () => {
     setCurrentProduct({
       id: "",
@@ -65,8 +54,6 @@ const AdminDashboard = () => {
       features: []
     });
     setIsEditing(false);
-    setSelectedFile(null);
-    setFileTypeIcon(null);
     setActiveTab("add");
   };
 
@@ -91,150 +78,21 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      
-      // Set the appropriate icon based on file type
-      if (file.type.startsWith('image/')) {
-        setFileTypeIcon(<FileImage className="h-5 w-5 text-blue-400" />);
-      } else if (file.type.startsWith('audio/')) {
-        setFileTypeIcon(<FileAudio className="h-5 w-5 text-green-400" />);
-      } else if (file.type.startsWith('video/')) {
-        setFileTypeIcon(<FileVideo className="h-5 w-5 text-purple-400" />);
-      } else if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
-        setFileTypeIcon(<FileArchive className="h-5 w-5 text-amber-400" />);
-      } else {
-        setFileTypeIcon(null);
-      }
-    }
-  };
-
-  const handleImageUpload = async () => {
-    if (!selectedFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select a file to upload",
-        variant: "destructive",
-      });
-      return null;
-    }
-
+  const handleSubmit = async (product: any) => {
     try {
-      setUploading(true);
-      
-      // Create a unique file name
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-      
-      // Check if the file type is supported
-      const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'audio/mpeg', 'audio/mp3', 'video/mp4', 'application/zip', 'application/x-zip-compressed'];
-      if (!supportedTypes.includes(selectedFile.type)) {
-        toast({
-          title: "Unsupported file type",
-          description: "Please upload an image (JPG, PNG, GIF), audio (MP3), video (MP4), or ZIP file",
-          variant: "destructive",
-        });
-        setUploading(false);
-        return null;
-      }
-      
-      // Create storage bucket if it doesn't exist
-      const { data: bucketExists } = await supabase.storage
-        .getBucket('product-images');
-        
-      if (!bucketExists) {
-        const { error: bucketError } = await supabase.storage
-          .createBucket('product-images', {
-            public: true,
-            fileSizeLimit: 52428800 // 50MB
-          });
-          
-        if (bucketError) {
-          console.error("Error creating storage bucket:", bucketError);
-          throw bucketError;
-        }
-      }
-      
-      // Upload the file to Supabase storage
-      const { data, error } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, selectedFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) throw error;
-      
-      // Get the public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
-      
-      toast({
-        title: "Success",
-        description: "File uploaded successfully",
-      });
-      
-      setCurrentProduct(prev => ({
-        ...prev,
-        image: publicUrlData.publicUrl
-      }));
-      
-      return publicUrlData.publicUrl;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast({
-        title: "Error",
-        description: "Error uploading file",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      // Upload image if a file is selected
-      if (selectedFile) {
-        const imageUrl = await handleImageUpload();
-        if (!imageUrl) return; // Stop if image upload failed
-      }
-      
       if (isEditing) {
         // Update existing product
-        await updateProduct(currentProduct.id, {
-          name: currentProduct.name,
-          description: currentProduct.description,
-          price: currentProduct.price,
-          image: currentProduct.image,
-          features: currentProduct.features
+        await updateProduct(currentProduct.id, product);
+        toast({
+          title: "Success",
+          description: "Product updated successfully",
         });
-        
-        setIsEditing(false);
       } else {
         // Add new product
-        if (!currentProduct.image) {
-          toast({
-            title: "Image required",
-            description: "Please upload an image for the product",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        await addProduct({
-          name: currentProduct.name,
-          description: currentProduct.description,
-          price: currentProduct.price,
-          image: currentProduct.image,
-          features: currentProduct.features
+        await addProduct(product);
+        toast({
+          title: "Success",
+          description: "Product added successfully",
         });
       }
       
@@ -242,6 +100,11 @@ const AdminDashboard = () => {
       setActiveTab("products");
     } catch (error) {
       console.error("Error saving product:", error);
+      toast({
+        title: "Error",
+        description: `Error ${isEditing ? 'updating' : 'adding'} product: ${error.message || "Unknown error"}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -291,7 +154,7 @@ const AdminDashboard = () => {
                     <Label htmlFor="admin-username">Admin Username</Label>
                     <Input 
                       id="admin-username" 
-                      value="admin" 
+                      value="admin@digitalio.com" 
                       className="bg-gray-800/50 border-gray-700 mt-1"
                       readOnly
                     />
@@ -323,79 +186,13 @@ const AdminDashboard = () => {
             </TabsList>
             
             <TabsContent value="products" className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Product List</h2>
-                <Button onClick={() => {
-                  resetForm();
-                  setActiveTab("add");
-                }} className="bg-purple-600 hover:bg-purple-700">
-                  <Plus className="mr-2 h-5 w-5" /> Add New Product
-                </Button>
-              </div>
-              
-              {loading ? (
-                <div className="flex justify-center items-center p-10">
-                  <LoaderCircle className="h-10 w-10 animate-spin text-purple-500" />
-                </div>
-              ) : (
-                <div className="rounded-md border border-gray-700 overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-gray-800">
-                      <TableRow>
-                        <TableHead className="text-white">Image</TableHead>
-                        <TableHead className="text-white">Name</TableHead>
-                        <TableHead className="text-white">Price</TableHead>
-                        <TableHead className="text-white">Description</TableHead>
-                        <TableHead className="text-white">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {products.length > 0 ? (
-                        products.map(product => (
-                          <TableRow key={product.id} className="border-gray-700 hover:bg-gray-800/60">
-                            <TableCell>
-                              <img 
-                                src={product.image} 
-                                alt={product.name} 
-                                className="w-12 h-12 object-cover rounded" 
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/48?text=Product";
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium">{product.name}</TableCell>
-                            <TableCell>${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}</TableCell>
-                            <TableCell className="text-sm text-gray-400 truncate max-w-xs">
-                              {product.description}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEditProduct(product)}>
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-red-400 hover:text-red-300 hover:bg-red-950 border-red-900" 
-                                  onClick={() => handleDeleteProduct(String(product.id))}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-6 text-gray-400">
-                            No products found. Click 'Add New Product' to create one.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+              <AdminProductList 
+                products={products}
+                loading={loading}
+                onEdit={handleEditProduct}
+                onDelete={handleDeleteProduct}
+                onAddNew={resetForm}
+              />
             </TabsContent>
             
             <TabsContent value="add" className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-6">
@@ -403,123 +200,15 @@ const AdminDashboard = () => {
                 {isEditing ? "Edit Product" : "Add New Product"}
               </h2>
               
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Product Name</Label>
-                  <Input 
-                    id="name" 
-                    name="name" 
-                    value={currentProduct.name} 
-                    onChange={handleInputChange} 
-                    className="bg-gray-800/50 border-gray-700"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea 
-                    id="description" 
-                    name="description" 
-                    value={currentProduct.description} 
-                    onChange={handleInputChange} 
-                    className="bg-gray-800/50 border-gray-700"
-                    rows={4}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price ($)</Label>
-                  <Input 
-                    id="price" 
-                    name="price" 
-                    type="number" 
-                    step="0.01" 
-                    min="0"
-                    value={currentProduct.price} 
-                    onChange={handleInputChange} 
-                    className="bg-gray-800/50 border-gray-700"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="image">Product Image</Label>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex gap-2">
-                      <Input
-                        id="image"
-                        name="image"
-                        value={currentProduct.image}
-                        onChange={handleInputChange}
-                        className="bg-gray-800/50 border-gray-700 flex-1"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="file-upload">Or upload a new image:</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="file-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="bg-gray-800/50 border-gray-700"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleImageUpload}
-                          disabled={!selectedFile || uploading}
-                          className="flex-shrink-0"
-                        >
-                          {uploading ? (
-                            <LoaderCircle className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <UploadCloud className="h-5 w-5" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {currentProduct.image && (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-400 mb-1">Preview:</p>
-                        <img
-                          src={currentProduct.image}
-                          alt="Preview"
-                          className="w-24 h-24 object-cover rounded border border-gray-700"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://via.placeholder.com/150";
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 pt-4">
-                  <Button 
-                    type="submit" 
-                    className="bg-purple-600 hover:bg-purple-700"
-                    disabled={uploading}
-                  >
-                    {uploading ? (
-                      <>
-                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      isEditing ? "Update Product" : "Add Product"
-                    )}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancel
-                  </Button>
-                </div>
-              </form>
+              <AdminProductForm
+                initialProduct={currentProduct}
+                isEditing={isEditing}
+                onSubmit={handleSubmit}
+                onCancel={() => {
+                  resetForm();
+                  setActiveTab("products");
+                }}
+              />
             </TabsContent>
           </Tabs>
         );
@@ -599,283 +288,7 @@ const AdminDashboard = () => {
           </header>
           
           <main className="p-6">
-            {activeSection === "dashboard" && (
-              <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-6">
-                <h2 className="text-xl font-semibold mb-6">Dashboard Overview</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gray-800/60 rounded-lg p-4 border border-gray-700">
-                    <h3 className="text-lg font-medium mb-2">Products</h3>
-                    <p className="text-3xl font-bold text-purple-400">{products.length}</p>
-                    <p className="text-gray-400 mt-2">Total products in store</p>
-                  </div>
-                  {/* More dashboard cards would go here */}
-                </div>
-              </div>
-            )}
-            
-            {activeSection === "orders" && (
-              <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-6">
-                <h2 className="text-xl font-semibold mb-6">Orders Management</h2>
-                <p className="text-gray-400">No orders found.</p>
-              </div>
-            )}
-            
-            {activeSection === "customers" && (
-              <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-6">
-                <h2 className="text-xl font-semibold mb-6">Customer Management</h2>
-                <p className="text-gray-400">No customers found.</p>
-              </div>
-            )}
-            
-            {activeSection === "settings" && (
-              <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-6">
-                <h2 className="text-xl font-semibold mb-6">Admin Settings</h2>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">Account Settings</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="admin-email">Admin Email</Label>
-                        <Input 
-                          id="admin-email" 
-                          value="admin@digitalio.com" 
-                          className="bg-gray-800/50 border-gray-700 mt-1"
-                          readOnly
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="admin-password">Change Password</Label>
-                        <Input 
-                          id="admin-password" 
-                          type="password" 
-                          placeholder="Enter new password" 
-                          className="bg-gray-800/50 border-gray-700 mt-1"
-                        />
-                      </div>
-                      <Button className="bg-purple-600 hover:bg-purple-700">
-                        Update Settings
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {activeSection === "products" && (
-              <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="bg-gray-800 border border-gray-700 mb-6">
-                  <TabsTrigger value="products">Product Management</TabsTrigger>
-                  <TabsTrigger value="add">Add/Edit Product</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="products" className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Product List</h2>
-                    <Button onClick={() => {
-                      resetForm();
-                      setActiveTab("add");
-                    }} className="bg-purple-600 hover:bg-purple-700">
-                      <Plus className="mr-2 h-5 w-5" /> Add New Product
-                    </Button>
-                  </div>
-                  
-                  {loading ? (
-                    <div className="flex justify-center items-center p-10">
-                      <LoaderCircle className="h-10 w-10 animate-spin text-purple-500" />
-                    </div>
-                  ) : (
-                    <div className="rounded-md border border-gray-700 overflow-hidden">
-                      <Table>
-                        <TableHeader className="bg-gray-800">
-                          <TableRow>
-                            <TableHead className="text-white">Image</TableHead>
-                            <TableHead className="text-white">Name</TableHead>
-                            <TableHead className="text-white">Price</TableHead>
-                            <TableHead className="text-white">Description</TableHead>
-                            <TableHead className="text-white">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {products.length > 0 ? (
-                            products.map(product => (
-                              <TableRow key={product.id} className="border-gray-700 hover:bg-gray-800/60">
-                                <TableCell>
-                                  <img 
-                                    src={product.image} 
-                                    alt={product.name} 
-                                    className="w-12 h-12 object-cover rounded" 
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = "https://via.placeholder.com/48?text=Product";
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell className="font-medium">{product.name}</TableCell>
-                                <TableCell>${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}</TableCell>
-                                <TableCell className="text-sm text-gray-400 truncate max-w-xs">
-                                  {product.description}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex space-x-2">
-                                    <Button variant="outline" size="sm" onClick={() => handleEditProduct(product)}>
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      className="text-red-400 hover:text-red-300 hover:bg-red-950 border-red-900" 
-                                      onClick={() => handleDeleteProduct(String(product.id))}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={5} className="text-center py-6 text-gray-400">
-                                No products found. Click 'Add New Product' to create one.
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="add" className="bg-black/20 backdrop-blur-sm rounded-lg border border-gray-700 p-6">
-                  <h2 className="text-xl font-semibold mb-6">
-                    {isEditing ? "Edit Product" : "Add New Product"}
-                  </h2>
-                  
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Product Name</Label>
-                      <Input 
-                        id="name" 
-                        name="name" 
-                        value={currentProduct.name} 
-                        onChange={handleInputChange} 
-                        className="bg-gray-800/50 border-gray-700"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea 
-                        id="description" 
-                        name="description" 
-                        value={currentProduct.description} 
-                        onChange={handleInputChange} 
-                        className="bg-gray-800/50 border-gray-700"
-                        rows={4}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price ($)</Label>
-                      <Input 
-                        id="price" 
-                        name="price" 
-                        type="number" 
-                        step="0.01" 
-                        min="0"
-                        value={currentProduct.price} 
-                        onChange={handleInputChange} 
-                        className="bg-gray-800/50 border-gray-700"
-                        required
-                      />
-                      <p className="text-xs text-gray-400">Enter 0 for free products</p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="image">Product File/Image</Label>
-                      <div className="flex flex-col gap-4">
-                        <div className="flex gap-2">
-                          <Input
-                            id="image"
-                            name="image"
-                            value={currentProduct.image}
-                            onChange={handleInputChange}
-                            className="bg-gray-800/50 border-gray-700 flex-1"
-                            placeholder="https://example.com/image.jpg"
-                          />
-                        </div>
-                        
-                        <div className="flex flex-col gap-2">
-                          <Label htmlFor="file-upload" className="flex items-center gap-2">
-                            Upload digital product:
-                            {fileTypeIcon && <span className="ml-2">{fileTypeIcon}</span>}
-                          </Label>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              id="file-upload"
-                              type="file"
-                              accept=".jpg,.jpeg,.png,.gif,.mp3,.mp4,.zip"
-                              onChange={handleFileChange}
-                              className="bg-gray-800/50 border-gray-700"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleImageUpload}
-                              disabled={!selectedFile || uploading}
-                              className="flex-shrink-0"
-                            >
-                              {uploading ? (
-                                <LoaderCircle className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <UploadCloud className="h-5 w-5" />
-                              )}
-                            </Button>
-                          </div>
-                          <p className="text-xs text-gray-400">
-                            Supported formats: JPG, PNG, GIF, MP3, MP4, ZIP (Max size: 50MB)
-                          </p>
-                        </div>
-                        
-                        {currentProduct.image && (
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-400 mb-1">Preview:</p>
-                            <img
-                              src={currentProduct.image}
-                              alt="Preview"
-                              className="w-24 h-24 object-cover rounded border border-gray-700"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = "https://via.placeholder.com/150";
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-3 pt-4">
-                      <Button 
-                        type="submit" 
-                        className="bg-purple-600 hover:bg-purple-700"
-                        disabled={uploading}
-                      >
-                        {uploading ? (
-                          <>
-                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          isEditing ? "Update Product" : "Add Product"
-                        )}
-                      </Button>
-                      <Button type="button" variant="outline" onClick={resetForm}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            )}
+            {renderContent()}
           </main>
         </div>
       </div>

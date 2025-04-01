@@ -117,12 +117,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       
+      console.log("Fetching products from database...");
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
+      
+      console.log("Products fetched:", data);
       
       // Convert the features from JSON to string array if needed
       const formattedProducts = data?.map(product => ({
@@ -134,8 +137,10 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       
       // If no products in database, use demo products
       if (!formattedProducts || formattedProducts.length === 0) {
+        console.log("No products found, using demo products");
         setProducts(demoProducts);
       } else {
+        console.log(`Setting ${formattedProducts.length} products from database`);
         setProducts(formattedProducts || []);
       }
     } catch (err) {
@@ -159,12 +164,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       
+      console.log("Adding product:", product);
       const { data, error } = await supabase
         .from('products')
         .insert([product])
         .select();
       
       if (error) throw error;
+      
+      console.log("Product added successfully:", data);
       
       toast({
         title: "Success",
@@ -189,12 +197,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       
+      console.log("Updating product:", id, updates);
       const { error } = await supabase
         .from('products')
         .update(updates)
         .eq('id', id);
       
       if (error) throw error;
+      
+      console.log("Product updated successfully");
       
       toast({
         title: "Success",
@@ -219,12 +230,15 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       
+      console.log("Deleting product:", id);
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
+      
+      console.log("Product deleted successfully");
       
       toast({
         title: "Success",
