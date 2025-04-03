@@ -29,14 +29,19 @@ const PAYMENT_METHODS: PaymentMethodDetails[] = [
     id: "nayapay",
     name: "NayaPay",
     instructions: "Transfer the payment to our NayaPay account using the IBAN below:",
-    details: "IBAN: PK00XXXX0000000000000000",
+    details: "IBAN: PK42NAYA1234503072690158",
     recommended: true
   },
   {
     id: "payoneer",
     name: "Payoneer",
     instructions: "Send the payment to our Payoneer account using the details below:",
-    details: "Payoneer Email: example@email.com",
+    details: `Bank name: First Century Bank
+Bank address: 1731 N Elm St Commerce, GA 30529 USA
+Routing (ABA): 061120084
+Account number: 4020616676964
+Account type: CHECKING
+Beneficiary name: Hamza Aslam`,
     recommended: true
   },
   {
@@ -53,7 +58,7 @@ const PAYMENT_METHODS: PaymentMethodDetails[] = [
   }
 ];
 
-const WHATSAPP_NUMBER = "923000000000";
+const WHATSAPP_NUMBER = "923144460158";
 
 const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
   const [paymentMethod, setPaymentMethod] = useState("nayapay");
@@ -169,7 +174,7 @@ const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
             
             {selectedPaymentDetails.details && (
               <div className="rounded-md bg-gray-50 p-4">
-                <code className="text-md font-mono">{selectedPaymentDetails.details}</code>
+                <pre className="text-md font-mono whitespace-pre-wrap">{selectedPaymentDetails.details}</pre>
               </div>
             )}
             
