@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Download, WhatsApp } from "lucide-react";
+import { CheckCircle2, Download, MessageCircle } from "lucide-react";
 import { Link } from 'react-router-dom';
 
 // WhatsApp number - admin can replace this with their number
@@ -62,7 +62,7 @@ const ConfirmationMessage = ({ orderNumber, email, isFreeProduct = false }: Conf
             onClick={handleWhatsAppClick}
             className="mt-4 w-full bg-green-500 text-white hover:bg-green-600"
           >
-            <WhatsApp className="mr-2 h-4 w-4" />
+            <MessageCircle className="mr-2 h-4 w-4" />
             Contact on WhatsApp
           </Button>
         </div>

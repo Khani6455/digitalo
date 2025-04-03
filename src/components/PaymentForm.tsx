@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowRight, WhatsApp, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowRight, MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProduct } from '@/contexts/ProductContext';
 import { useNavigate } from 'react-router-dom';
@@ -53,7 +52,6 @@ const PAYMENT_METHODS: PaymentMethodDetails[] = [
   }
 ];
 
-// WhatsApp number - admin can replace this with their number
 const WHATSAPP_NUMBER = "923000000000";
 
 const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
@@ -77,7 +75,6 @@ const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
     setIsSubmitting(true);
     
     try {
-      // Process order through Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('process-payment', {
         body: {
           paymentMethod,
@@ -107,7 +104,6 @@ const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
   };
 
   const handleWhatsAppClick = () => {
-    // Opens WhatsApp with predefined message
     const message = `Hi! I'm interested in the ${selectedProduct?.name || "product"} (Order from: ${email})`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, '_blank');
@@ -181,7 +177,7 @@ const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
               onClick={handleWhatsAppClick}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-6"
             >
-              <WhatsApp className="mr-2 h-5 w-5" />
+              <MessageCircle className="mr-2 h-5 w-5" />
               Contact on WhatsApp
             </Button>
           </div>
