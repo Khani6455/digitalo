@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -85,6 +84,12 @@ const Checkout = () => {
     setOrderNumber(`ORD-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`);
     setCurrentStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Show toast for additional instructions
+    toast.info("Payment Verification Required", {
+      description: "Please send a payment screenshot via WhatsApp to complete your order.",
+      duration: 8000,
+    });
   };
   
   const renderStep = () => {
