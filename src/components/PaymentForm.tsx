@@ -91,15 +91,15 @@ const PaymentForm = ({ onComplete, email }: PaymentFormProps) => {
       
       if (error) throw error;
       
-      if (data.success) {
+      if (data?.success) {
         toast.success("Order received", {
           description: "Your order has been placed successfully. Please send payment screenshot via WhatsApp."
         });
         onComplete();
       } else {
-        throw new Error(data.error || "Order processing failed");
+        throw new Error(data?.error || "Order processing failed");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Order error:", error);
       toast.error("Order failed", {
         description: error.message || "There was an issue processing your order. Please try again."
